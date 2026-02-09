@@ -16,28 +16,29 @@ class InfluxLogger:
 
     def log_reading(self, device_name, data_dict):
         """
-        Converts your device dictionary into an InfluxDB Point
-        data_dict format: {'value': 1.23, 'unit': 'mbar', 'status': 'OK'}
+        Converts your device dictionary into an InfluxDB Point.
+        Now supports dynamic field names (e.g., pressure, motor_temp, power_consumption).
         """
         # 1. Skip if there is no valid number to plot
-        if data_dict['value'] is None:
+        if data_dict.get('value') is None:
             return
-
-        # 2. Create the Data Point
-        # Measurement: The "Table" name (e.g., "vacuum_readings")
-        # Tags: Metadata to filter by (e.g., Device Name, Unit)
-        # Fields: The actual numbers (Value)
+    
+        # 2. Determine the field name. 
+        # Use the 'field' key if it exists, otherwise default to "value"
+        field_name = data_dict.get('field', 'value')
+    
+        # 3. Create the Data Point
         p = Point("sensor_data") \
             .tag("device", device_name) \
             .tag("unit", data_dict['unit']) \
-            .field("value", float(data_dict['value'])) \
+            .field(field_name, float(data_dict['value'])) \
             .time(datetime.datetime.utcnow())
-
-        # 3. Write to DB
+    
+        # 4. Write to DB
         try:
             self.write_api.write(bucket=self.bucket, org=self.org, record=p)
         except Exception as e:
-            print(f"⚠️ DB Write Failed: {e}")
+            print(f"⚠️ DB Write Failed for {device_name} ({field_name}): {e}")
 
     def close(self):
         self.client.close()
