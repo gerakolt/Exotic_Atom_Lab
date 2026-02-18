@@ -77,16 +77,16 @@ try:
         for device in devices:
             # We wrap this in a try/except so one bad read doesn't crash the whole loop
             try:
-                data = device.read_data()
-                
-                if data.get('value') is not None:
-                    db.log_reading(device.name, data)
-                    print(f"   [Saved to DB] {device.name}: {data['value']:.2E} {data['unit']}")
-
-                # Check specifically for permission errors/disconnects
-                if "Access is denied" in str(data.get('status', '')) or "Input/output error" in str(data.get('status', '')):
-                    print(f"⚡ USB Crash detected. Attempting to reconnect to {device.name}")
-                    reconnect_device(device, devices)
+                datas = device.read_data()
+                for data in datas:
+                    if data.get('value') is not None:
+                        db.log_reading(device.name, data)
+                        print(f"   [Saved to DB] {device.name} ({data['field']}): {data['value']:.2E} {data['unit']}")
+    
+                    # Check specifically for permission errors/disconnects
+                    if "Access is denied" in str(data.get('status', '')) or "Input/output error" in str(data.get('status', '')):
+                        print(f"⚡ USB Crash detected. Attempting to reconnect to {device.name}")
+                        reconnect_device(device, devices)
             
             except Exception as e:
                 print(f"⚠️ Error reading {device.name}: {e}")
