@@ -142,7 +142,7 @@ class PfeifferTurboPump(LabDevice):
         
         try:
             self.ser.write(full_cmd.encode('ascii'))
-            time.sleep(0.2) # Wait for pump to process
+            time.sleep(1) # Wait for pump to process
             
             if self.ser.in_waiting:
                 response = self.ser.read_until(b'\r').decode('ascii', errors='ignore').strip()
