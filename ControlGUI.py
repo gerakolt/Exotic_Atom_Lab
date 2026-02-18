@@ -2,8 +2,7 @@ import tkinter as tk
 import json
 import os
 
-CONTROL_FILE = "control.txt"
-
+CONTROL_FILE = "/home/exoticlab/Monitor_and_Control/control.txt"
 class LabControlGUI:
     def __init__(self, root):
         self.root = root
@@ -11,14 +10,15 @@ class LabControlGUI:
         
         # Current desired state for all devices
         self.device_states = {
-            "target_pump": {"state": "OFF", "pending": False},
-            "beam_pump": {"state": "OFF", "pending": False}
+            "target chamber turbo pump": {"state": "ON", "pending": False},
+            "beam bending chamber turbo pump": {"state": "ON", "pending": False}
         }
-        
+        self.save_control_file()
         # Create UI
-        self.create_control_row("Target Chamber Pump", "target_pump")
-        self.create_control_row("Beam Bending Pump", "beam_pump")
-
+        self.create_control_row("Target chamber turbo pump", "target chamber turbo pump")
+        self.create_control_row("Beam bending chamber turbo pump", "beam bending chamber turbo pump")
+        self.save_control_file()
+        
     def create_control_row(self, label, key):
         frame = tk.Frame(self.root, pady=5, padx=10)
         frame.pack(fill="x")
@@ -26,7 +26,7 @@ class LabControlGUI:
         tk.Label(frame, text=label, width=25, anchor="w").pack(side=tk.LEFT)
         
         # Toggle Button
-        btn = tk.Button(frame, text="TURN ON", bg="red", fg="white", width=10,
+        btn = tk.Button(frame, text="TURN OFF", bg="red", fg="white", width=10,
                         command=lambda k=key, b=None: self.request_toggle(k))
         btn.pack(side=tk.RIGHT)
         # Store button reference to update color later if needed

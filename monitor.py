@@ -3,6 +3,7 @@ import serial.tools.list_ports
 import time
 import csv
 import os
+import json
 from datetime import datetime
 from abc import ABC, abstractmethod
 # Make sure Devices.py and Database.py are in the same folder on the Pi!
@@ -82,7 +83,7 @@ try:
                     gui_commands = json.load(f)
                 update_control_txt = False
                 for device in devices:
-                    cmd_key = device.name.lower().replace(" ", "_")
+                    cmd_key = device.name.lower()
                     device_cmd = gui_commands.get(cmd_key) #holds the state of cmd_key ({"state": "ON", "pending": True})
                     if device_cmd and device_cmd.get("pending") and hasattr(device, 'control'):
                         device.control(device_cmd["state"])
@@ -91,7 +92,8 @@ try:
                 if update_control_txt:
                     with open("control.txt", "w") as f:
                         json.dump(gui_commands, f, indent=4)
-        
+            except Exception as e:
+                print(f"⚠️ Control file error: {e}") 
         for device in devices:
             # We wrap this in a try/except so one bad read doesn't crash the whole loop
             try:
