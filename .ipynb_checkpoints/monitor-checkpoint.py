@@ -73,17 +73,7 @@ devices.append(PfeifferTurboPump(name, com_connection, address=adress))
 
 print("Starting Monitor...")
 try:
-    last_sent_commands = {}
     while True:
-
-        if os.path.exists("control.txt"):
-            try:
-                with open("control.txt", "r") as f:
-                    gui_commands = json.load(f)
-                for device in devices:
-                    if isinstance(device, PfeifferTurboPump):
-                    
-        
         for device in devices:
             # We wrap this in a try/except so one bad read doesn't crash the whole loop
             try:
