@@ -77,16 +77,6 @@ class PfeifferGauge(LabDevice):
         super().__init__(name, serial_conn)
         self.address = address
 
-    def control(self, command_value):
-        state = (command_value == "ON")
-        action = "111111" if state else "000000"
-        # Parameter 010 is the Pump Station power
-        command = f"{self.address:03d}1001006{action}" 
-        # Add your checksum logic here (if you use it)
-        full_command = f"{command}??\r" # Replace ?? with your CRC function
-        self.ser.write(full_command.encode())
-        print(f"📡 Sent {'ON' if state else 'OFF'} command to {self.name}")
-
     def read_data(self):
         param = 740  # Pressure reading parameter
         cmd = f"{self.address:03d}00{param:03d}02=?"
@@ -141,6 +131,16 @@ class PfeifferTurboPump(LabDevice):
     def __init__(self, name, serial_conn, address):
         super().__init__(name, serial_conn)
         self.address = address
+
+    def control(self, command_value):
+        state = (command_value == "ON")
+        action = "111111" if state else "000000"
+        # Parameter 010 is the Pump Station power
+        command = f"{self.address:03d}1001006{action}" 
+        # Add your checksum logic here (if you use it)
+        full_command = f"{command}??\r" # Replace ?? with your CRC function
+        self.ser.write(full_command.encode())
+        print(f"📡 Sent {'ON' if state else 'OFF'} command to {self.name}")
 
     def read_data(self):
         # Hz, Temp[C], Power[W]
