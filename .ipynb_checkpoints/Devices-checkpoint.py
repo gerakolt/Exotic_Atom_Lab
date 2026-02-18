@@ -77,16 +77,6 @@ class PfeifferGauge(LabDevice):
         super().__init__(name, serial_conn)
         self.address = address
 
-    def control(self, command_value):
-        state = (command_value == "ON")
-        action = "111111" if state else "000000"
-        # Parameter 010 is the Pump Station power
-        command = f"{self.address:03d}1001006{action}" 
-        # Add your checksum logic here (if you use it)
-        full_command = f"{command}??\r" # Replace ?? with your CRC function
-        self.ser.write(full_command.encode())
-        print(f"📡 Sent {'ON' if state else 'OFF'} command to {self.name}")
-
     def read_data(self):
         param = 740  # Pressure reading parameter
         cmd = f"{self.address:03d}00{param:03d}02=?"
@@ -141,6 +131,27 @@ class PfeifferTurboPump(LabDevice):
     def __init__(self, name, serial_conn, address):
         super().__init__(name, serial_conn)
         self.address = address
+
+    def control(self, state_command):
+        state_bool = (state_command == "ON")
+        action = "111111" if state_bool else "000000"
+        
+        cmd = f"{self.address:03d}1001006{action}"
+        chk = calculate_checksum(cmd)
+        full_cmd = f"{cmd}{chk:03d}\r"
+        
+        try:
+            self.ser.write(full_cmd.encode('ascii'))
+            time.sleep(0.2) # Wait for pump to process
+            
+            if self.ser.in_waiting:
+                response = self.ser.read_until(b'\r').decode('ascii', errors='ignore').strip()
+                print(f"📡 Command: {state_command} | Device: {self.name} | Response: {response}")
+            else:
+                print(f"⚠️ {self.name} sent no response to command.")
+                
+        except Exception as e:
+            print(f"❌ Serial Error on {self.name}: {e}")
 
     def read_data(self):
         # Hz, Temp[C], Power[W]

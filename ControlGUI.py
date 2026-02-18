@@ -18,6 +18,27 @@ class LabControlGUI:
         self.create_control_row("Target chamber turbo pump", "target chamber turbo pump")
         self.create_control_row("Beam bending chamber turbo pump", "beam bending chamber turbo pump")
         self.save_control_file()
+        self.check_status()
+
+    def check_status(self):
+        if os.path.exists(CONTROL_FILE):
+            try:
+                with open(CONTROL_FILE, "r") as f:
+                    states = json.load(f)
+                
+                for key, data in states.items():
+                    btn = getattr(self, f"btn_{key}", None)
+                    if btn and not data["pending"]:
+                        # Reset button color based on state
+                        if data["state"] == "ON":
+                            btn.config(text="TURN OFF", bg="green")
+                        else:
+                            btn.config(text="TURN ON", bg="red")
+            except Exception as e:
+                print(f"GUI Sync Error: {e}")
+
+        # Schedule this function to run again in 500ms
+        self.root.after(500, self.check_status)
         
     def create_control_row(self, label, key):
         frame = tk.Frame(self.root, pady=5, padx=10)

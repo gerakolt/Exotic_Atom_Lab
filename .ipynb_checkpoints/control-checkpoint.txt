@@ -1,0 +1,10 @@
+{
+    "target chamber turbo pump": {
+        "state": "OFF",
+        "pending": true
+    },
+    "beam bending chamber turbo pump": {
+        "state": "ON",
+        "pending": false
+    }
+}
