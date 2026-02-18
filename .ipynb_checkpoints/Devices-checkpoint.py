@@ -77,11 +77,8 @@ class PfeifferGauge(LabDevice):
         super().__init__(name, serial_conn)
         self.address = address
 
-    def set_pumping_state(self, state: bool):
-        """
-        state=True turns pump ON (Parameter 010)
-        state=False turns pump OFF
-        """
+    def control(self, command_value):
+        state = (command_value == "ON")
         action = "111111" if state else "000000"
         # Parameter 010 is the Pump Station power
         command = f"{self.address:03d}1001006{action}" 

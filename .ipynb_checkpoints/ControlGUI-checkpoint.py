@@ -1,40 +1,58 @@
 import tkinter as tk
-from tkinter import messagebox
-from Devices import PfeifferTurboPump, open_serial_port
+import json
+import os
 
-class PumpControlGUI:
-    def __init__(self, root, pumps):
+CONTROL_FILE = "control.txt"
+
+class LabControlGUI:
+    def __init__(self, root):
         self.root = root
-        self.root.title("Exotic Atom Lab - Pump Control")
-        self.pumps = pumps
+        self.root.title("Exotic Atom Lab - Device Control")
+        
+        # Current desired state for all devices
+        self.device_states = {
+            "target_pump": {"state": "OFF", "pending": False},
+            "beam_pump": {"state": "OFF", "pending": False}
+        }
+        
+        # Create UI
+        self.create_control_row("Target Chamber Pump", "target_pump")
+        self.create_control_row("Beam Bending Pump", "beam_pump")
 
-        for i, pump in enumerate(self.pumps):
-            frame = tk.LabelFrame(root, text=pump.name, padx=10, pady=10)
-            frame.grid(row=i, column=0, padx=20, pady=10, sticky="ew")
+    def create_control_row(self, label, key):
+        frame = tk.Frame(self.root, pady=5, padx=10)
+        frame.pack(fill="x")
+        
+        tk.Label(frame, text=label, width=25, anchor="w").pack(side=tk.LEFT)
+        
+        # Toggle Button
+        btn = tk.Button(frame, text="TURN ON", bg="red", fg="white", width=10,
+                        command=lambda k=key, b=None: self.request_toggle(k))
+        btn.pack(side=tk.RIGHT)
+        # Store button reference to update color later if needed
+        setattr(self, f"btn_{key}", btn)
 
-            tk.Button(frame, text="TURN ON", fg="green", width=15,
-                      command=lambda p=pump: self.toggle_pump(p, True)).pack(side=tk.LEFT, padx=5)
-            
-            tk.Button(frame, text="TURN OFF", fg="red", width=15,
-                      command=lambda p=pump: self.toggle_pump(p, False)).pack(side=tk.LEFT, padx=5)
+    def request_toggle(self, key):
+        # 1. Switch the internal desired state
+        current = self.device_states[key]["state"]
+        new_state = "ON" if current == "OFF" else "OFF"
+        
+        # 2. Update the state and SET THE PENDING FLAG
+        self.device_states[key]["state"] = new_state
+        self.device_states[key]["pending"] = True
+        
+        # 3. Update the button color immediately for feedback
+        btn = getattr(self, f"btn_{key}")
+        btn.config(text=f"SETTING {new_state}...", bg="orange")
 
-    def toggle_pump(self, pump, state):
-        confirm = messagebox.askyesno("Confirm", f"Are you sure you want to {'START' if state else 'STOP'} {pump.name}?")
-        if confirm:
-            try:
-                pump.set_pumping_state(state)
-            except Exception as e:
-                messagebox.showerror("Error", f"Failed to command pump: {e}")
+        # 4. Save to the JSON file for monitor.py to find
+        self.save_control_file()
 
-# Setup connections (Mirroring your monitor.py settings)
-ser0 = open_serial_port("/dev/ttyUSB0", 9600)
-ser2 = open_serial_port("/dev/ttyUSB2", 9600)
-
-lab_pumps = [
-    PfeifferTurboPump("Target Chamber Pump", ser0, address=5),
-    PfeifferTurboPump("Beam Bending Pump", ser2, address=1)
-]
+    def save_control_file(self):
+        with open(CONTROL_FILE, "w") as f:
+            json.dump(self.device_states, f, indent=4)
+        print(f"📝 Command sent: {self.device_states}")
 
 root = tk.Tk()
-gui = PumpControlGUI(root, lab_pumps)
+app = LabControlGUI(root)
 root.mainloop()

@@ -80,9 +80,17 @@ try:
             try:
                 with open("control.txt", "r") as f:
                     gui_commands = json.load(f)
+                update_control_txt = False
                 for device in devices:
-                    if isinstance(device, PfeifferTurboPump):
-                    
+                    cmd_key = device.name.lower().replace(" ", "_")
+                    device_cmd = gui_commands.get(cmd_key) #holds the state of cmd_key ({"state": "ON", "pending": True})
+                    if device_cmd and device_cmd.get("pending") and hasattr(device, 'control'):
+                        device.control(device_cmd["state"])
+                        device_cmd["pending"] = False
+                        update_control_txt = True
+                if update_control_txt:
+                    with open("control.txt", "w") as f:
+                        json.dump(gui_commands, f, indent=4)
         
         for device in devices:
             # We wrap this in a try/except so one bad read doesn't crash the whole loop
