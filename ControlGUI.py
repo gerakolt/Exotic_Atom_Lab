@@ -29,11 +29,12 @@ class LabControlGUI:
                 for key, data in states.items():
                     btn = getattr(self, f"btn_{key}", None)
                     if btn and not data["pending"]:
-                        # Reset button color based on state
-                        if data["state"] == "ON":
-                            btn.config(text="TURN OFF", bg="green")
-                        else:
+                        # If the pump is currently OFF, the button should offer to turn it ON
+                        if data["state"] == "OFF":
                             btn.config(text="TURN ON", bg="red")
+                        # If the pump is currently ON, the button should offer to turn it OFF
+                        else:
+                            btn.config(text="TURN OFF", bg="green")
             except Exception as e:
                 print(f"GUI Sync Error: {e}")
 
